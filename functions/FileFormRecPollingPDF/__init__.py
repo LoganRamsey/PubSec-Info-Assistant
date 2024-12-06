@@ -4,7 +4,7 @@
 import logging
 import os
 import json
-import random
+import secrets
 from collections import namedtuple
 import time
 import azure.functions as func
@@ -132,7 +132,7 @@ def main(msg: func.QueueMessage) -> None:
                 # still running so requeue with a backoff
                 if queued_count < max_read_attempts:
                     backoff = polling_backoff * (queued_count ** 2)
-                    backoff += random.randint(0, 10)
+                    backoff += secrets.randbelow(11)
                     queued_count += 1
                     message_json['polling_queue_count'] = queued_count
                     statusLog.upsert_document(blob_name, f"{function_name} - FR has not completed processing, requeuing. Polling back off of attempt {queued_count} of {max_polling_requeue_count} for {backoff} seconds", StatusClassification.DEBUG, State.QUEUED) 

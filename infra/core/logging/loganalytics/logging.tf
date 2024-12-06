@@ -15,6 +15,7 @@ resource "azurerm_application_insights" "applicationInsights" {
   application_type    = "web"
   tags                = var.tags
   workspace_id        = azurerm_log_analytics_workspace.logAnalytics.id
+  internet_ingestion_enabled = false
 }
 
 // Create Diagnostic Setting for NSG here since the log analytics workspace is created here after the network is created

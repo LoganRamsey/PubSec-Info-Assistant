@@ -4,7 +4,7 @@
 import logging
 import os
 import json
-import random
+import secrets
 import time
 from shared_code.status_log import StatusLog, State, StatusClassification
 import azure.functions as func
@@ -83,7 +83,7 @@ def main(myblob: func.InputStream):
     """ Function to read supported file types and pass to the correct queue for processing"""
 
     try:
-        time.sleep(random.randint(1, 2))  # add a random delay
+        time.sleep(secrets.randbelow(2) + 1)  # add a random delay
         statusLog.upsert_document(myblob.name, 'Pipeline triggered by Blob Upload', StatusClassification.INFO, State.PROCESSING, False)            
         statusLog.upsert_document(myblob.name, f'{function_name} - FileUploadedFunc function started', StatusClassification.DEBUG)    
         
@@ -176,7 +176,7 @@ def main(myblob: func.InputStream):
                                queue_name=queue_name,
                                credential=azure_credential,
                                message_encode_policy=TextBase64EncodePolicy())
-        backoff =  random.randint(1, max_seconds_hide_on_upload)        
+        backoff =  secrets.randbelow(max_seconds_hide_on_upload + 1)
         queue_client.send_message(message_string, visibility_timeout = backoff)  
         statusLog.upsert_document(myblob.name, f'{function_name} - {file_extension} file sent to submit queue. Visible in {backoff} seconds', StatusClassification.DEBUG, State.QUEUED)          
         

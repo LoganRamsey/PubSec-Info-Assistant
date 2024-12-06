@@ -32,9 +32,13 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
     const web_sourceFiles: Record<string, string> = {};
     const pageNumbers: Record<string, number> = {};
     const followupQuestions: string[] = [];
+    const RE2 = require("re2")
+    const re = new RE2(/<<<([^>>>]+)>>>/g)
+    const re2 = new RE2(/\[([^\]]+)\]/g)
+    const re3 = new RE2(/\w+(\d)$/)
 
     // Extract any follow-up questions that might be in the answer
-    let parsedAnswer = answer.replace(/<<<([^>>>]+)>>>/g, (match, content) => {
+    let parsedAnswer = answer.replace(re, (match, content) => {
         followupQuestions.push(content);
         return "";
     });
@@ -47,7 +51,7 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
 
     if (approach == Approaches.ChatWebRetrieveRead || approach == Approaches.ReadRetrieveRead) {
         // Split the answer into parts, where the odd parts are citations
-        const parts = parsedAnswer.split(/\[([^\]]+)\]/g);
+        const parts = parsedAnswer.split(re2);
         const pattern = /^\w+[0-9]$/;
         fragments = parts.map((part, index) => {
             if (!pattern.test(part)) {
@@ -57,7 +61,7 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
                 if (approach == Approaches.ReadRetrieveRead) {
                     const citation_lookup = work_citation_lookup;
                     // LLM Sometimes refers to citations as "source"
-                    part = part.replace(/\w+(\d)$/, 'File$1');
+                    part = part.replace(re3, 'File$1');
                     // Odd parts are citations as the "FileX" moniker
                     const citation = citation_lookup[part];
                     if (!citation) {
@@ -109,7 +113,7 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
                 if (approach == Approaches.ChatWebRetrieveRead) {
                     const citation_lookup = web_citation_lookup;
                     // LLM Sometimes refers to citations as "source"
-                    part = part.replace(/\w+(\d)$/, 'url$1');
+                    part = part.replace(re3, 'url$1');
                     // Odd parts are citations as the "FileX" moniker
                     const citation = citation_lookup[part];
                     if (!citation) {
@@ -148,7 +152,7 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
         });
     }
     if (approach == Approaches.CompareWorkWithWeb || approach == Approaches.CompareWebWithWork) {
-        const parts = parsedAnswer.split(/\[([^\]]+)\]/g);
+        const parts = parsedAnswer.split(re2);
         fragments = parts.map((part, index) => {
             if (index % 2 === 0) {
                 // Even parts are just text
@@ -157,7 +161,7 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
                 return "";
             }
         });
-        const work_parts = thought_chain["work_response"].split(/\[([^\]]+)\]/g);
+        const work_parts = thought_chain["work_response"].split(re2);
         work_fragments = work_parts.map((part, index) => {
             // Enumerate over work_citation_lookup and add the property citation to work_citations string array
             if (index % 2 === 0) {
@@ -186,7 +190,7 @@ export function parseAnswerToHtml(answer: string, approach: Approaches, work_cit
             }
             return "";
         });
-        const web_parts = thought_chain["web_response"].split(/\[([^\]]+)\]/g);
+        const web_parts = thought_chain["web_response"].split(re2);
         web_fragments = web_parts.map((part, index) => {
             // Enumerate over web_citation_lookup and add the property citation to web_citations string array
             if (index % 2 === 0) {

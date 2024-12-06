@@ -51,6 +51,13 @@ resource "azurerm_cosmosdb_account" "cosmosdb_account" {
   capabilities {
     name = "EnableServerless"
   }
+
+  backup {
+    type = "Periodic"
+    interval_in_minutes = 240
+    retention_in_hours = 8
+    storage_redundancy = "Local"
+  }
 }
 
 resource "azurerm_cosmosdb_sql_database" "log_database" {
